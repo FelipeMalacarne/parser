@@ -1,4 +1,4 @@
-import { Moon, Sun } from "lucide-react";
+import { Computer, Moon, Sun } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
@@ -22,8 +22,7 @@ export function ThemeToggle() {
     } else if (theme === "light") {
       return <Sun className="h-4 w-4" />;
     } else {
-      // system theme
-      return <Sun className="h-4 w-4" />;
+      return <Computer className="h-4 w-4" />;
     }
   };
 

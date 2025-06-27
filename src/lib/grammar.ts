@@ -1,4 +1,4 @@
-export const grammar = {
+export const grammar: Record<string, string[]> = {
   S: ["A B"],
   A: ["a A c", "B d"],
   B: ["b B", "C"],
@@ -25,7 +25,7 @@ export const followSets = {
 }
 
 // Parsing table
-export const parsingTable = {
+export const parsingTable: Record<string, Record<string, string>> = {
   S: {
     a: "A B",
     b: "A B",
@@ -256,7 +256,7 @@ export function generateSentence(maxLength: number) {
 
     return production
       .split(" ")
-      .map((s) => expand(s))
+      .map((s: string) => expand(s))
       .join("")
   }
 

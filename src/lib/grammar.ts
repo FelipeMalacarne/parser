@@ -55,7 +55,7 @@ export const parsingTable: Record<string, Record<string, string>> = {
 }
 
 // Terminal symbols
-export const terminals = ["a", "b", "c", "d"]
+export const terminals = ["a", "b", "c", "d", "$"]
 
 // Non-terminal symbols
 export const nonTerminals = ["S", "A", "B", "C", "D"]
@@ -100,188 +100,154 @@ export const exampleSentences = [
 ]
 
 // Parse the input string
-export function parseInput(inputStr: string) {
-  const inputTokens = inputStr.split("").concat("$")
-  let stackContent = ["$", "S"]
-  let position = 0
-  let iterations = 0
-  const trace: Array<{
+export class LL1Parser {
+  private trace: Array<{
     stack: string[]
     input: string
     action: string
     currentSymbol: string
     matched: boolean
   }> = []
+  private iterations = 0
+  private stackContent: string[] = []
+  private inputTokens: string[] = []
+  private position = 0
 
-  trace.push({
-    stack: [...stackContent],
-    input: inputTokens.slice(position).join(""),
-    action: "Initial configuration",
-    currentSymbol: "",
-    matched: false,
-  })
+  private reset() {
+    this.trace = []
+    this.iterations = 0
+    this.stackContent = []
+    this.inputTokens = []
+    this.position = 0
+  }
 
-  while (stackContent.length > 0) {
-    iterations++
-    const top = stackContent[stackContent.length - 1]
-    const currentInput = inputTokens[position]
+  public parse(
+    inputStr: string,
+  ): { accepted: boolean; iterations: number; trace: typeof this.trace } {
+    this.reset()
+    this.inputTokens = inputStr.split("").concat("$")
+    this.stackContent = ["$", "S"]
+    this.position = 0
 
-    if (top === "$" && currentInput === "$") {
-      // Successful parse
-      trace.push({
-        stack: [...stackContent],
-        input: inputTokens.slice(position).join(""),
-        action: "Accept",
-        currentSymbol: "$",
-        matched: true,
-      })
-      return { accepted: true, iterations, trace }
-    }
+    this.trace.push({
+      stack: [...this.stackContent],
+      input: this.inputTokens.slice(this.position).join(""),
+      action: "Initial configuration",
+      currentSymbol: "",
+      matched: false,
+    })
 
-    if (terminals.includes(top) || top === "$") {
-      if (top === currentInput) {
-        stackContent.pop()
-        position++
-        trace.push({
-          stack: [...stackContent],
-          input: inputTokens.slice(position).join(""),
-          action: `Match ${top}`,
-          currentSymbol: top,
-          matched: true,
-        })
-      } else {
-        // Error: terminal mismatch
-        trace.push({
-          stack: [...stackContent],
-          input: inputTokens.slice(position).join(""),
-          action: `Error: expected ${top}, found ${currentInput}`,
-          currentSymbol: currentInput,
-          matched: false,
-        })
-        return { accepted: false, iterations, trace }
+    while (this.stackContent.length > 0) {
+      this.iterations++
+      const top = this.stackContent[this.stackContent.length - 1]
+      const currentInput = this.inputTokens[this.position]
+
+      if (top === "$" && currentInput === "$") {
+        return this.accept()
       }
-    } else if (nonTerminals.includes(top)) {
-      if (parsingTable[top] && parsingTable[top][currentInput]) {
-        const production = parsingTable[top][currentInput]
-        stackContent.pop()
 
-        if (production !== "ε") {
-          // Push production in reverse order
-          const productionSymbols = production.split(" ").reverse()
-          stackContent = stackContent.concat(productionSymbols)
+      if (terminals.includes(top)) {
+        if (top === currentInput) {
+          this.match(top)
+        } else {
+          return this.error(
+            `Error: Mismatch. Expected ${top}, but found ${currentInput}`,
+            currentInput,
+          )
         }
-
-        trace.push({
-          stack: [...stackContent],
-          input: inputTokens.slice(position).join(""),
-          action: `Expand ${top} → ${production}`,
-          currentSymbol: top,
-          matched: true,
-        })
+      } else if (nonTerminals.includes(top)) {
+        if (parsingTable[top] && parsingTable[top][currentInput]) {
+          this.expand(top, currentInput)
+        } else {
+          return this.error(
+            `Error: No parsing table entry for Non-Terminal ${top} and Input ${currentInput}`,
+            currentInput,
+          )
+        }
       } else {
-        // Error: no production rule
-        trace.push({
-          stack: [...stackContent],
-          input: inputTokens.slice(position).join(""),
-          action: `Error: no production for ${top} with input ${currentInput}`,
-          currentSymbol: currentInput,
-          matched: false,
-        })
-        return { accepted: false, iterations, trace }
+        return this.error(`Error: Invalid symbol in stack: ${top}`, top)
       }
-    } else {
-      // Error: unknown symbol
-      trace.push({
-        stack: [...stackContent],
-        input: inputTokens.slice(position).join(""),
-        action: `Error: unknown symbol ${top}`,
-        currentSymbol: top,
-        matched: false,
-      })
-      return { accepted: false, iterations, trace }
     }
-
-    // Safety check to prevent infinite loops
-    if (iterations > 100) {
-      trace.push({
-        stack: [...stackContent],
-        input: inputTokens.slice(position).join(""),
-        action: "Error: too many iterations",
-        currentSymbol: "",
-        matched: false,
-      })
-      return { accepted: false, iterations, trace }
-    }
+    // Fallback in case of unexpected loop exit
+    return { accepted: false, iterations: this.iterations, trace: this.trace }
   }
 
-  // If we get here, there's an error
-  trace.push({
-    stack: [...stackContent],
-    input: inputTokens.slice(position).join(""),
-    action: "Error: unexpected end of input",
-    currentSymbol: "",
-    matched: false,
-  })
-  return { accepted: false, iterations, trace }
+  private accept() {
+    this.trace.push({
+      stack: [...this.stackContent],
+      input: this.inputTokens.slice(this.position).join(""),
+      action: "Accept",
+      currentSymbol: "$",
+      matched: true,
+    })
+    return { accepted: true, iterations: this.iterations, trace: this.trace }
+  }
+
+  private match(top: string) {
+    this.stackContent.pop()
+    this.position++
+    this.trace.push({
+      stack: [...this.stackContent],
+      input: this.inputTokens.slice(this.position).join(""),
+      action: `Match ${top}`,
+      currentSymbol: top,
+      matched: true,
+    })
+  }
+
+  private expand(top: string, currentInput: string) {
+    const production = parsingTable[top][currentInput]
+    this.stackContent.pop()
+
+    if (production !== "ε") {
+      const symbols = production.split(" ").reverse()
+      this.stackContent.push(...symbols)
+    }
+
+    this.trace.push({
+      stack: [...this.stackContent],
+      input: this.inputTokens.slice(this.position).join(""),
+      action: `Expand ${top} → ${production}`,
+      currentSymbol: top,
+      matched: true,
+    })
+  }
+
+  private error(action: string, currentSymbol: string) {
+    this.trace.push({
+      stack: [...this.stackContent],
+      input: this.inputTokens.slice(this.position).join(""),
+      action,
+      currentSymbol,
+      matched: false,
+    })
+    return { accepted: false, iterations: this.iterations, trace: this.trace }
+  }
 }
 
-// Generate a random sentence
 export function generateSentence(maxLength: number) {
-  let sentence = ""
-  const currentSymbol = "S"
-  let depth = 0
+  const sentence: string[] = []
+  const stack: string[] = ["$", "S"]
 
-  const expand = (symbol: string): string => {
-    if (depth > maxLength) {
-      // Choose the shortest path to termination
-      if (symbol === "C") return ""
-      if (symbol === "B") return "c"
-      if (symbol === "A") return "bd"
-      if (symbol === "D") return "ad"
+  while (stack.length > 0) {
+    const top = stack.pop()!
+
+    if (terminals.includes(top)) {
+      sentence.push(top)
+    } else if (nonTerminals.includes(top)) {
+      const productions = grammar[top]
+      const production = productions[Math.floor(Math.random() * productions.length)]
+      const symbols = production.split(" ").reverse()
+      stack.push(...symbols)
     }
-
-    depth++
-
-    if (terminals.includes(symbol)) {
-      return symbol
-    }
-
-    if (symbol === "ε") {
-      return ""
-    }
-
-    const productions = grammar[symbol]
-    // Choose a random production
-    const production = productions[Math.floor(Math.random() * productions.length)]
-
-    return production
-      .split(" ")
-      .map((s: string) => expand(s))
-      .join("")
   }
 
-  sentence = expand(currentSymbol)
-  return sentence
+  return sentence.join("").replace(/\$/g, "")
 }
-
-// Get a description for a sentence
 export function getSentenceDescription(sentence: string) {
-  const example = exampleSentences.find((ex) => ex.sentence === sentence)
-  if (example) {
-    return example.meaning
-  }
-
-  // Generate a contextual meaning based on patterns
-  if (sentence.startsWith("a") && sentence.includes("c")) {
-    return "A formal statement or declaration"
-  } else if (sentence.startsWith("ab")) {
-    return "A question or inquiry"
-  } else if (sentence.includes("bd")) {
-    return "A request or command"
-  } else if (sentence.length > 6) {
-    return "A complex expression or detailed statement"
-  } else {
-    return "A simple expression in our language"
-  }
+  const example = exampleSentences.find(
+    (ex) => ex.sentence === sentence && ex.valid,
+  )
+  return example ? example.meaning : "No valid description found."
 }
 

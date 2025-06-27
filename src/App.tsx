@@ -7,7 +7,7 @@ import { SentenceGenerator } from "@/components/sentence-generator";
 import { ParsingResult } from "@/components/parsing-result";
 import { ExecutionTrace } from "@/components/execution-trace";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { parseInput, getSentenceDescription } from "@/lib/grammar";
+import { LL1Parser, getSentenceDescription } from "@/lib/grammar";
 import {
   Card,
   CardContent,
@@ -30,14 +30,15 @@ function App() {
   const [trace, setTrace] = useState<Array<any>>([]);
   const [activeTab, setActiveTab] = useState("input");
   const [sentenceMeaning, setSentenceMeaning] = useState("");
+  const parser = new LL1Parser();
 
-  const handleParse = (parseResult: any) => {
+  const handleParse = (parseResult: any, parsedInput: string) => {
     setResult({
       accepted: parseResult.accepted,
       iterations: parseResult.iterations,
     });
     setTrace(parseResult.trace);
-    setSentenceMeaning(getSentenceDescription(input));
+    setSentenceMeaning(getSentenceDescription(parsedInput));
   };
 
   const handleReset = () => {
@@ -52,9 +53,8 @@ function App() {
     setActiveTab("input");
 
     // Automatically parse the generated sentence
-    const parseResult = parseInput(sentence);
-    handleParse(parseResult);
-    setSentenceMeaning(getSentenceDescription(sentence));
+    const parseResult = parser.parse(sentence);
+    handleParse(parseResult, sentence);
   };
 
   return (
@@ -85,9 +85,9 @@ function App() {
 
           <TabsContent value="input">
             <SentenceInput
-              onParse={(result) => {
-                handleParse(result);
-                setSentenceMeaning(getSentenceDescription(input));
+              onParse={(result, parsedInput) => {
+                setInput(parsedInput);
+                handleParse(result, parsedInput);
               }}
               onReset={handleReset}
             />

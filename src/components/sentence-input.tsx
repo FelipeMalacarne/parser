@@ -3,20 +3,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RefreshCw } from "lucide-react"
-import { parseInput } from "@/lib/grammar"
+import { LL1Parser } from "@/lib/grammar"
 import { exampleSentences } from "@/lib/grammar"
 
 interface SentenceInputProps {
-  onParse: (result: any) => void
+  onParse: (result: any, input: string) => void
   onReset: () => void
 }
 
 export function SentenceInput({ onParse, onReset }: SentenceInputProps) {
   const [input, setInput] = useState("")
+  const parser = new LL1Parser()
 
   const handleParse = () => {
-    const result = parseInput(input)
-    onParse(result)
+    const result = parser.parse(input)
+    onParse(result, input)
   }
 
   return (

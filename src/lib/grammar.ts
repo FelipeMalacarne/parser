@@ -1,27 +1,27 @@
 export const grammar: Record<string, string[]> = {
   S: ["A B"],
-  A: ["a A c", "B d"],
-  B: ["b B", "C"],
-  C: ["c C", "ε"],
-  D: ["d D", "d b D", "a d"],
+  A: ["a B", "b C", "ε"],
+  B: ["b D C", "c A"],
+  C: ["c d", "a b"],
+  D: ["d c"],
 }
 
 // First sets
 export const firstSets = {
-  S: ["a", "b", "c", "d"],
-  A: ["a", "b", "c", "d"],
-  B: ["b", "c", "ε"],
-  C: ["c", "ε"],
-  D: ["d", "a"],
+  S: ["a", "b", "c"],
+  A: ["a", "b", "ε"],
+  B: ["b", "c"],
+  C: ["c", "a"],
+  D: ["d"],
 }
 
 // Follow sets
 export const followSets = {
   S: ["$"],
   A: ["b", "c", "$"],
-  B: ["$", "d"],
-  C: ["$", "d"],
-  D: ["$", "d"],
+  B: ["b", "c", "$"],
+  C: ["b", "c", "$"],
+  D: ["a", "c"],
 }
 
 // Parsing table
@@ -30,27 +30,23 @@ export const parsingTable: Record<string, Record<string, string>> = {
     a: "A B",
     b: "A B",
     c: "A B",
-    d: "A B",
   },
   A: {
-    a: "a A c",
-    b: "B d",
-    c: "B d",
-    d: "B d",
+    a: "a B",
+    b: "b C",
+    c: "ε",
+    $: "ε",
   },
   B: {
-    b: "b B",
-    c: "C",
-    $: "C",
+    b: "b D C",
+    c: "c A",
   },
   C: {
-    c: "c C",
-    $: "ε",
-    d: "ε",
+    a: "a b",
+    c: "c d",
   },
   D: {
-    d: "d D",
-    a: "a d",
+    d: "d c",
   },
 }
 
@@ -64,50 +60,47 @@ export const nonTerminals = ["S", "A", "B", "C", "D"]
 export const exampleSentences = [
   {
     sentence: "abccd",
-    meaning: "A simple greeting in our language",
+    meaning: "A valid sentence.",
     valid: true,
   },
   {
-    sentence: "abcd",
-    meaning: "A question about the weather",
+    sentence: "c",
+    meaning: "A valid sentence.",
     valid: true,
   },
   {
-    sentence: "acbcd",
-    meaning: "Asking for directions",
+    sentence: "abdcab",
+    meaning: "A valid sentence.",
     valid: true,
   },
   {
-    sentence: "abd",
-    meaning: "A farewell expression",
+    sentence: "babc",
+    meaning: "A valid sentence.",
     valid: true,
   },
   {
-    sentence: "aaccd",
-    meaning: "Expressing gratitude",
-    valid: true,
-  },
-  {
-    sentence: "abc",
-    meaning: "Incomplete expression (invalid)",
+    sentence: "d",
+    meaning: "An invalid sentence.",
     valid: false,
   },
   {
-    sentence: "aad",
-    meaning: "Incorrect grammar structure (invalid)",
+    sentence: "ac",
+    meaning: "An invalid sentence.",
     valid: false,
   },
 ]
 
 // Parse the input string
+interface TraceStep {
+  stack: string[]
+  input: string
+  action: string
+  currentSymbol: string
+  matched: boolean
+}
+
 export class LL1Parser {
-  private trace: Array<{
-    stack: string[]
-    input: string
-    action: string
-    currentSymbol: string
-    matched: boolean
-  }> = []
+  private trace: TraceStep[] = []
   private iterations = 0
   private stackContent: string[] = []
   private inputTokens: string[] = []
@@ -121,9 +114,11 @@ export class LL1Parser {
     this.position = 0
   }
 
-  public parse(
-    inputStr: string,
-  ): { accepted: boolean; iterations: number; trace: typeof this.trace } {
+  public parse(inputStr: string): {
+    accepted: boolean
+    iterations: number
+    trace: TraceStep[]
+  } {
     this.reset()
     this.inputTokens = inputStr.split("").concat("$")
     this.stackContent = ["$", "S"]
@@ -225,7 +220,7 @@ export class LL1Parser {
   }
 }
 
-export function generateSentence(maxLength: number) {
+export function generateSentence() {
   const sentence: string[] = []
   const stack: string[] = ["$", "S"]
 

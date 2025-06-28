@@ -66,19 +66,10 @@ export const parsingTable: Record<string, Record<string, string>> = {
   },
 };
 
-/**
- * Lista de todos os símbolos terminais da gramática.
- */
 export const terminals: string[] = ["a", "b", "c", "d", "$"];
 
-/**
- * Lista de todos os símbolos não-terminais da gramática.
- */
 export const nonTerminals: string[] = ["S", "A", "B", "C", "D"];
 
-/**
- * Exemplos de sentenças para validar o parser.
- */
 export const exampleSentences = [
   {
     sentence: "a",

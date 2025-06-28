@@ -29,7 +29,7 @@ export function ParsingTable() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[100px]">Non-Terminal</TableHead>
-              {terminals.concat("$").map((terminal) => (
+              {terminals.map((terminal) => (
                 <TableHead key={terminal}>{terminal}</TableHead>
               ))}
             </TableRow>
@@ -38,7 +38,7 @@ export function ParsingTable() {
             {nonTerminals.map((nonTerminal) => (
               <TableRow key={nonTerminal}>
                 <TableCell className="font-medium">{nonTerminal}</TableCell>
-                {terminals.concat("$").map((terminal) => (
+                {terminals.map((terminal) => (
                   <TableCell key={terminal}>
                     {parsingTable[nonTerminal] &&
                     parsingTable[nonTerminal][terminal]

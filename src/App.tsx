@@ -22,7 +22,6 @@ import {
 } from "@/components/grammar-display";
 
 function App() {
-  const [input, setInput] = useState("");
   const [result, setResult] = useState<{
     accepted: boolean;
     iterations: number;
@@ -42,14 +41,12 @@ function App() {
   };
 
   const handleReset = () => {
-    setInput("");
     setResult(null);
     setTrace([]);
     setSentenceMeaning("");
   };
 
   const handleUseGenerated = (sentence: string) => {
-    setInput(sentence);
     setActiveTab("input");
 
     // Automatically parse the generated sentence
@@ -86,7 +83,6 @@ function App() {
           <TabsContent value="input">
             <SentenceInput
               onParse={(result, parsedInput) => {
-                setInput(parsedInput);
                 handleParse(result, parsedInput);
               }}
               onReset={handleReset}

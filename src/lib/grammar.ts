@@ -239,7 +239,7 @@ export class LL1Parser {
 }
 
 export function generateSentence(maxLength: number): string {
-  const maxAttempts = 200; 
+  const maxAttempts = 200;
   for (let i = 0; i < maxAttempts; i++) {
     const sentence: string[] = [];
     const stack: string[] = ["S"];
@@ -268,7 +268,7 @@ export function generateSentence(maxLength: number): string {
         }
       }
       if (sentence.length > maxLength) {
-        break; 
+        break;
       }
     }
 

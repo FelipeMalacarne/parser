@@ -238,25 +238,53 @@ export class LL1Parser {
   }
 }
 
-export function generateSentence() {
-  const sentence: string[] = [];
-  const stack: string[] = ["$", "S"];
+export function generateSentence(maxLength: number): string {
+  const maxAttempts = 200; 
+  for (let i = 0; i < maxAttempts; i++) {
+    const sentence: string[] = [];
+    const stack: string[] = ["S"];
+    const maxGenerationSteps = maxLength * 10;
+    let steps = 0;
 
-  while (stack.length > 0) {
-    const top = stack.pop()!;
+    while (stack.length > 0 && steps < maxGenerationSteps) {
+      steps++;
+      const top = stack.pop()!;
 
-    if (terminals.includes(top)) {
-      sentence.push(top);
-    } else if (nonTerminals.includes(top)) {
-      const productions = grammar[top];
-      const production =
-        productions[Math.floor(Math.random() * productions.length)];
-      const symbols = production.split(" ").reverse();
-      stack.push(...symbols);
+      if (terminals.includes(top)) {
+        sentence.push(top);
+      } else if (nonTerminals.includes(top)) {
+        const productions = grammar[top];
+        const useEpsilon =
+          sentence.length + stack.length >= maxLength &&
+          productions.includes("ε");
+
+        const production = useEpsilon
+          ? "ε"
+          : productions[Math.floor(Math.random() * productions.length)];
+
+        if (production !== "ε") {
+          const symbols = production.split(" ").reverse();
+          stack.push(...symbols);
+        }
+      }
+      if (sentence.length > maxLength) {
+        break; 
+      }
+    }
+
+    if (stack.length === 0 && sentence.length <= maxLength) {
+      const result = sentence.join("");
+      if (result.length > 0) {
+        const parser = new LL1Parser();
+        if (parser.parse(result).accepted) {
+          return result;
+        }
+      }
     }
   }
+  if (maxLength >= 1) return "a";
 
-  return sentence.join("").replace(/\$/g, "");
+  return "";
 }
 export function getSentenceDescription(sentence: string) {
   const example = exampleSentences.find(

@@ -121,7 +121,7 @@ export function ExecutionTrace({ trace }: ExecutionTraceProps) {
         <div className="mb-6 p-4 border rounded-md bg-muted">
           <h3 className="font-semibold mb-2">Current Stack</h3>
           <div className="flex flex-wrap gap-2">
-            {trace[currentStep].stack.map((symbol, index) => (
+            {trace[currentStep] && trace[currentStep].stack.map((symbol, index) => (
               <motion.div
                 key={`${index}-${symbol}`}
                 initial={{ opacity: 0, y: 20 }}
@@ -140,7 +140,7 @@ export function ExecutionTrace({ trace }: ExecutionTraceProps) {
 
           <h3 className="font-semibold mt-4 mb-2">Current Input</h3>
           <div className="flex flex-wrap">
-            {trace[currentStep].input.split("").map((char, index) => (
+            {trace[currentStep] && trace[currentStep].input.split("").map((char, index) => (
               <motion.div
                 key={`input-${index}-${char}`}
                 initial={{ opacity: 0 }}
@@ -160,15 +160,15 @@ export function ExecutionTrace({ trace }: ExecutionTraceProps) {
             className={`
             p-2 rounded-md font-mono text-sm
             ${
-              trace[currentStep].matched
+              trace[currentStep] && trace[currentStep].matched
                 ? "bg-green-100 dark:bg-green-900/30"
-                : trace[currentStep].action.includes("Error")
+                : trace[currentStep] && trace[currentStep].action.includes("Error")
                   ? "bg-red-100 dark:bg-red-900/30"
                   : "bg-blue-100 dark:bg-blue-900/30"
             }
           `}
           >
-            {trace[currentStep].action}
+            {trace[currentStep] && trace[currentStep].action}
           </div>
         </div>
 
